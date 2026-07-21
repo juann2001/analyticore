@@ -10,6 +10,10 @@ RUN npm install
 # Copy the rest of the application
 COPY . .
 
+# Pass the Render environment variable into the build
+ARG VITE_API_URL
+ENV VITE_API_URL=$VITE_API_URL
+
 # Build the application
 RUN npm run build
 
