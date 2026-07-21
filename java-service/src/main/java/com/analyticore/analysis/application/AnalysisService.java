@@ -56,9 +56,28 @@ public class AnalysisService {
     }
 
     private String analyzeSentiment(String text) {
-        if (text.contains("excelente") || text.contains("buen") || text.contains("feliz")) {
+        String lowerText = text.toLowerCase();
+        
+        boolean containsBut = lowerText.contains("pero ") || lowerText.contains("sin embargo") || lowerText.contains("aunque");
+
+        int positiveScore = 0;
+        int negativeScore = 0;
+
+        if (lowerText.contains("excelente") || lowerText.contains("buen") || lowerText.contains("feliz") || lowerText.contains("genial") || lowerText.contains("increíble")) {
+            positiveScore++;
+        }
+        
+        if (lowerText.contains("mal") || lowerText.contains("horrible") || lowerText.contains("triste") || lowerText.contains("pésimo") || lowerText.contains("pesimo") || lowerText.contains("terrible") || lowerText.contains("decepcionante") || lowerText.contains("pésima") || lowerText.contains("pesima")) {
+            negativeScore++;
+        }
+
+        if (positiveScore > 0 && containsBut) {
+            return "NEUTRAL";
+        }
+
+        if (positiveScore > negativeScore) {
             return "POSITIVE";
-        } else if (text.contains("mal") || text.contains("horrible") || text.contains("triste")) {
+        } else if (negativeScore > positiveScore) {
             return "NEGATIVE";
         }
         return "NEUTRAL";
