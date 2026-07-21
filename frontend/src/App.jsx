@@ -11,7 +11,7 @@ function App() {
     <div className="container">
       <header className="header">
         <h1>AnalytiCore</h1>
-        <p>Text Analysis Platform</p>
+        <p>Plataforma de Análisis de Texto</p>
       </header>
 
       <main className="main-content">

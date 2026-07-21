@@ -3,9 +3,9 @@ from pydantic import BaseModel
 from typing import List, Optional
 
 class JobStatus(str, Enum):
-    PENDING = "PENDIENTE"
-    PROCESSING = "PROCESANDO"
-    COMPLETED = "COMPLETADO"
+    PENDIENTE = "PENDIENTE"
+    PROCESANDO = "PROCESANDO"
+    COMPLETADO = "COMPLETADO"
     ERROR = "ERROR"
 
 class AnalysisResult(BaseModel):
@@ -15,5 +15,5 @@ class AnalysisResult(BaseModel):
 class Job(BaseModel):
     id: str
     text: str
-    status: JobStatus = JobStatus.PENDING
+    status: JobStatus = JobStatus.PENDIENTE
     result: Optional[AnalysisResult] = None

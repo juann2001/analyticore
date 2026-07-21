@@ -19,10 +19,10 @@ export function JobStatus({ job }) {
 
   return (
     <div className="card status-card">
-      <h3>Job Status</h3>
+      <h3>Estado del trabajo</h3>
       <p><strong>ID:</strong> {job.id}</p>
       <p>
-        <strong>Status:</strong>{' '}
+        <strong>Estado:</strong>{' '}
         <span style={{ color: getStatusColor(), fontWeight: 'bold' }}>
           {job.status}
         </span>

@@ -7,7 +7,7 @@ from app.infrastructure.java_client import request_analysis_from_java
 
 def create_job(text: str, db: Session) -> Job:
     job_id = str(uuid.uuid4())
-    db_job = JobModel(id=job_id, text=text, status=DBJobStatus.PENDING)
+    db_job = JobModel(id=job_id, text=text, status=DBJobStatus.PENDIENTE.value)
     
     db.add(db_job)
     db.commit()
@@ -16,7 +16,7 @@ def create_job(text: str, db: Session) -> Job:
     # Trigger Java service synchronously
     request_analysis_from_java(job_id)
 
-    return Job(id=job_id, text=text, status=JobStatus.PENDING)
+    return Job(id=job_id, text=text, status=JobStatus.PENDIENTE)
 
 def get_job_status(job_id: str, db: Session) -> Job:
     db_job = db.query(JobModel).filter(JobModel.id == job_id).first()
@@ -34,6 +34,6 @@ def get_job_status(job_id: str, db: Session) -> Job:
     return Job(
         id=db_job.id,
         text=db_job.text,
-        status=JobStatus(db_job.status.value),
+        status=JobStatus(db_job.status),
         result=result_obj
     )

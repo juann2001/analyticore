@@ -11,9 +11,9 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
 class DBJobStatus(enum.Enum):
-    PENDING = "PENDIENTE"
-    PROCESSING = "PROCESANDO"
-    COMPLETED = "COMPLETADO"
+    PENDIENTE = "PENDIENTE"
+    PROCESANDO = "PROCESANDO"
+    COMPLETADO = "COMPLETADO"
     ERROR = "ERROR"
 
 class JobModel(Base):
@@ -21,7 +21,7 @@ class JobModel(Base):
 
     id = Column(String, primary_key=True, index=True)
     text = Column(Text, nullable=False)
-    status = Column(Enum(DBJobStatus), default=DBJobStatus.PENDING)
+    status = Column(String, default=DBJobStatus.PENDIENTE.value)
     result = Column(Text, nullable=True) # Stored as JSON string
 
 def init_db():

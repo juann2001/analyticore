@@ -8,17 +8,17 @@ export function JobResult({ job }) {
 
   return (
     <div className="card result-card">
-      <h3>Analysis Results</h3>
+      <h3>Resultados del Análisis</h3>
       
       <div className="result-section">
-        <h4>Sentiment</h4>
+        <h4>Sentimiento</h4>
         <span className={`sentiment-badge ${sentiment.toLowerCase()}`}>
           {sentiment}
         </span>
       </div>
 
       <div className="result-section">
-        <h4>Keywords</h4>
+        <h4>Palabras clave</h4>
         {keywords && keywords.length > 0 ? (
           <div className="keywords-list">
             {keywords.map((kw, i) => (
@@ -26,7 +26,7 @@ export function JobResult({ job }) {
             ))}
           </div>
         ) : (
-          <p>No keywords extracted.</p>
+          <p>No se extrajeron palabras clave.</p>
         )}
       </div>
     </div>
