@@ -39,6 +39,20 @@ jobs:
 
   test-submission:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: analyticore
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     defaults:
       run:
         working-directory: python-service/
@@ -55,7 +69,7 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install -r requirements.txt
-          pip install flake8 pytest pytest-cov pip-audit httpx httpx[asyncio] pytest-asyncio
+          pip install flake8 pytest pytest-cov pip-audit httpx pytest-asyncio
           
       - name: Static Analysis (Flake8)
         run: flake8 app/
@@ -72,6 +86,20 @@ jobs:
 
   test-analysis:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: analyticore
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     defaults:
       run:
         working-directory: java-service/
