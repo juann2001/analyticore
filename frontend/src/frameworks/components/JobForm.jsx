@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 export function JobForm({ onSubmit, loading }) {
   const [text, setText] = useState('');

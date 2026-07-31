@@ -1,4 +1,3 @@
-import React from 'react'
 import { JobForm } from './frameworks/components/JobForm'
 import { JobStatus } from './frameworks/components/JobStatus'
 import { JobResult } from './frameworks/components/JobResult'

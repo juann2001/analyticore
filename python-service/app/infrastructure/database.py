@@ -1,8 +1,7 @@
 import os
-from sqlalchemy import create_engine, Column, String, Text, Enum
+from sqlalchemy import create_engine, Column, String, Text
 from sqlalchemy.orm import sessionmaker, declarative_base
 import enum
-import json
 
 DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql://postgres:password@localhost:5432/postgres")
 

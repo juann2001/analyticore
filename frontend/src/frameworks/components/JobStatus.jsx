@@ -1,4 +1,3 @@
-import React from 'react';
 import { JobStatus as StatusEnum } from '../../domain/Job';
 
 export function JobStatus({ job }) {
