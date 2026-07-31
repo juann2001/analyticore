@@ -61,6 +61,8 @@ jobs:
         run: flake8 app/
         
       - name: Unit Tests
+        env:
+          DATABASE_URL: sqlite:///./test.db
         run: pytest tests/ --cov=app
         
       - name: Vulnerability Scan (pip-audit)
