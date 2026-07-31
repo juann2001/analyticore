@@ -22,6 +22,7 @@ public class AnalysisService {
         this.objectMapper = objectMapper;
     }
 
+    @org.springframework.scheduling.annotation.Async
     public void processJob(String jobId) {
         Optional<JobEntity> optionalJob = jobRepository.findById(jobId);
         if (optionalJob.isEmpty()) return;

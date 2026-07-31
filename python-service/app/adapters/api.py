@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from typing import Optional, List
@@ -11,8 +11,9 @@ class CreateJobRequest(BaseModel):
     text: str
 
 class AnalysisResultResponse(BaseModel):
-    sentiment: str
-    keywords: List[str]
+    sentiment: str = ""
+    keywords: List[str] = []
+    error: Optional[str] = None
 
 class JobResponse(BaseModel):
     jobId: str
@@ -20,8 +21,8 @@ class JobResponse(BaseModel):
     result: Optional[AnalysisResultResponse] = None
 
 @router.post("/jobs", response_model=JobResponse)
-def create_job(req: CreateJobRequest, db: Session = Depends(get_db)):
-    job = use_cases.create_job(req.text, db)
+def create_job(req: CreateJobRequest, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
+    job = use_cases.create_job(req.text, background_tasks, db)
     return JobResponse(jobId=job.id, status=job.status.value, result=None)
 
 @router.get("/jobs/{job_id}", response_model=JobResponse)
@@ -32,6 +33,10 @@ def get_job(job_id: str, db: Session = Depends(get_db)):
     
     result_dict = None
     if job.result:
-        result_dict = AnalysisResultResponse(sentiment=job.result.sentiment, keywords=job.result.keywords)
+        result_dict = AnalysisResultResponse(
+            sentiment=job.result.sentiment, 
+            keywords=job.result.keywords,
+            error=job.result.error
+        )
         
     return JobResponse(jobId=job.id, status=job.status.value, result=result_dict)

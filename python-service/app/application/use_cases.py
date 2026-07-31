@@ -1,11 +1,14 @@
 import uuid
 import json
+from typing import Optional
 from sqlalchemy.orm import Session
 from app.domain.models import Job, JobStatus, AnalysisResult
 from app.infrastructure.database import JobModel, DBJobStatus
 from app.infrastructure.java_client import request_analysis_from_java
 
-def create_job(text: str, db: Session) -> Job:
+from fastapi import BackgroundTasks
+
+def create_job(text: str, background_tasks: BackgroundTasks, db: Session) -> Job:
     job_id = str(uuid.uuid4())
     db_job = JobModel(id=job_id, text=text, status=DBJobStatus.PENDIENTE.value)
     
@@ -13,12 +16,12 @@ def create_job(text: str, db: Session) -> Job:
     db.commit()
     db.refresh(db_job)
     
-    # Trigger Java service synchronously
-    request_analysis_from_java(job_id)
+    # Trigger Java service asynchronously
+    background_tasks.add_task(request_analysis_from_java, job_id)
 
     return Job(id=job_id, text=text, status=JobStatus.PENDIENTE)
 
-def get_job_status(job_id: str, db: Session) -> Job:
+def get_job_status(job_id: str, db: Session) -> Optional[Job]:
     db_job = db.query(JobModel).filter(JobModel.id == job_id).first()
     if not db_job:
         return None

@@ -1,0 +1,228 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  test-frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend/
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Lint (ESLint)
+        run: npm run lint
+        
+      - name: Run Tests (Jest)
+        run: npm test -- --coverage
+        
+      - name: Security Audit
+        run: npm audit --audit-level=high
+
+      - name: Notify on failure
+        if: failure()
+        run: echo "test-frontend job failed!"
+
+  test-submission:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: python-service/
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install flake8 pytest pytest-cov pip-audit httpx httpx[asyncio] pytest-asyncio
+          
+      - name: Static Analysis (Flake8)
+        run: flake8 app/
+        
+      - name: Unit Tests
+        run: pytest tests/ --cov=app
+        
+      - name: Dependency Vulnerability Scan (pip-audit)
+        run: pip-audit
+        
+      - name: Notify on failure
+        if: failure()
+        run: echo "test-submission job failed!"
+
+  test-analysis:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: java-service/
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: "temurin"
+          cache: "maven"
+          
+      - name: Resolve dependencies
+        run: mvn dependency:resolve
+        
+      - name: Static Analysis (Checkstyle)
+        run: mvn checkstyle:check
+        
+      - name: Unit Tests (JUnit)
+        run: mvn test
+        
+      - name: Dependency Vulnerability Scan (OWASP)
+        run: mvn org.owasp:dependency-check-maven:check
+        
+      - name: Notify on failure
+        if: failure()
+        run: echo "test-analysis job failed!"
+
+  build-and-scan:
+    needs: [test-frontend, test-submission, test-analysis]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        
+      - name: Build Frontend Image
+        uses: docker/build-push-action@v5
+        with:
+          context: frontend/
+          load: true
+          tags: ghcr.io/${{ github.repository }}/frontend:${{ github.sha }}
+          
+      - name: Build Python Service Image
+        uses: docker/build-push-action@v5
+        with:
+          context: python-service/
+          load: true
+          tags: ghcr.io/${{ github.repository }}/submission-service:${{ github.sha }}
+          
+      - name: Build Java Service Image
+        uses: docker/build-push-action@v5
+        with:
+          context: java-service/
+          load: true
+          tags: ghcr.io/${{ github.repository }}/analysis-service:${{ github.sha }}
+
+      - name: Trivy Scan - Frontend
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ghcr.io/${{ github.repository }}/frontend:${{ github.sha }}
+          format: "table"
+          exit-code: 1
+          severity: "CRITICAL"
+
+      - name: Trivy Scan - Python Service
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ghcr.io/${{ github.repository }}/submission-service:${{ github.sha }}
+          format: "table"
+          exit-code: 1
+          severity: "CRITICAL"
+
+      - name: Trivy Scan - Java Service
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ghcr.io/${{ github.repository }}/analysis-service:${{ github.sha }}
+          format: "table"
+          exit-code: 1
+          severity: "CRITICAL"
+
+      - name: Push Frontend Image
+        run: docker push ghcr.io/${{ github.repository }}/frontend:${{ github.sha }}
+
+      - name: Push Python Service Image
+        run: docker push ghcr.io/${{ github.repository }}/submission-service:${{ github.sha }}
+
+      - name: Push Java Service Image
+        run: docker push ghcr.io/${{ github.repository }}/analysis-service:${{ github.sha }}
+        
+      - name: Notify on failure
+        if: failure()
+        run: echo "build-and-scan job failed!"
+
+  deploy-staging:
+    needs: [build-and-scan]
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Render Deploy Hooks for Staging
+        run: |
+          curl -X POST ${{ secrets.RENDER_STAGING_FRONTEND_HOOK }}
+          curl -X POST ${{ secrets.RENDER_STAGING_SUBMISSION_HOOK }}
+          curl -X POST ${{ secrets.RENDER_STAGING_ANALYSIS_HOOK }}
+          
+      - name: Wait for services to spin up
+        run: sleep 60
+        
+      - name: Smoke Tests (Staging)
+        run: |
+          curl --fail --retry 5 --retry-delay 10 ${{ secrets.STAGING_FRONTEND_URL }}
+          curl --fail --retry 5 --retry-delay 10 ${{ secrets.STAGING_SUBMISSION_URL }}/health
+          curl --fail --retry 5 --retry-delay 10 ${{ secrets.STAGING_ANALYSIS_URL }}/actuator/health
+          
+      - name: Notify on failure
+        if: failure()
+        run: echo "deploy-staging job failed!"
+
+  deploy-production:
+    needs: [deploy-staging]
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+    steps:
+      - name: Trigger Render Deploy Hooks for Production
+        run: |
+          curl -X POST ${{ secrets.RENDER_PROD_FRONTEND_HOOK }}
+          curl -X POST ${{ secrets.RENDER_PROD_SUBMISSION_HOOK }}
+          curl -X POST ${{ secrets.RENDER_PROD_ANALYSIS_HOOK }}
+          
+      - name: Wait for services to spin up
+        run: sleep 60
+        
+      - name: Smoke Tests (Production)
+        run: |
+          curl --fail --retry 5 --retry-delay 10 ${{ secrets.STAGING_FRONTEND_URL }}
+          curl --fail --retry 5 --retry-delay 10 ${{ secrets.STAGING_SUBMISSION_URL }}/health
+          curl --fail --retry 5 --retry-delay 10 ${{ secrets.STAGING_ANALYSIS_URL }}/actuator/health
+          
+      - name: Notify on failure
+        if: failure()
+        run: echo "deploy-production job failed!"

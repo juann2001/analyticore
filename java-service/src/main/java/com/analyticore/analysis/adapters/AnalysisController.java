@@ -24,11 +24,8 @@ public class AnalysisController {
             return ResponseEntity.badRequest().build();
         }
 
-        // Processing should ideally be asynchronous to return 202 quickly,
-        // but for simplicity in this prototype we can start it in a new thread
-        // or rely on the python service's timeout handling. 
-        // A better approach is using an ExecutorService.
-        new Thread(() -> analysisService.processJob(jobId)).start();
+        // Processing will be asynchronous using @Async in the service
+        analysisService.processJob(jobId);
 
         return ResponseEntity.accepted().build();
     }

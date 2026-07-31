@@ -9,8 +9,9 @@ class JobStatus(str, Enum):
     ERROR = "ERROR"
 
 class AnalysisResult(BaseModel):
-    sentiment: str
-    keywords: List[str]
+    sentiment: str = ""
+    keywords: List[str] = []
+    error: Optional[str] = None
 
 class Job(BaseModel):
     id: str
