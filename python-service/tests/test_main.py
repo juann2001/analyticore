@@ -1,4 +1,7 @@
 import pytest
+import os
+os.environ["DATABASE_URL"] = "sqlite:///./test.db"
+
 from httpx import AsyncClient, ASGITransport
 from app.main import app
 from app.infrastructure.database import init_db
