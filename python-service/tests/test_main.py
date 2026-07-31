@@ -1,3 +1,4 @@
+# flake8: noqa: E402
 import pytest
 import os
 os.environ["DATABASE_URL"] = "sqlite:///./test.db"
