@@ -191,18 +191,18 @@ jobs:
     steps:
       - name: Trigger Render Deploy Hooks for Staging
         run: |
-          curl -X POST ${{ secrets.RENDER_STAGING_FRONTEND_HOOK }}
-          curl -X POST ${{ secrets.RENDER_STAGING_SUBMISSION_HOOK }}
-          curl -X POST ${{ secrets.RENDER_STAGING_ANALYSIS_HOOK }}
+          if [ -n "${{ secrets.RENDER_STAGING_FRONTEND_HOOK }}" ]; then curl -X POST ${{ secrets.RENDER_STAGING_FRONTEND_HOOK }}; else echo "Frontend hook not set"; fi
+          if [ -n "${{ secrets.RENDER_STAGING_SUBMISSION_HOOK }}" ]; then curl -X POST ${{ secrets.RENDER_STAGING_SUBMISSION_HOOK }}; else echo "Submission hook not set"; fi
+          if [ -n "${{ secrets.RENDER_STAGING_ANALYSIS_HOOK }}" ]; then curl -X POST ${{ secrets.RENDER_STAGING_ANALYSIS_HOOK }}; else echo "Analysis hook not set"; fi
           
       - name: Wait for services to spin up
         run: sleep 60
         
       - name: Smoke Tests (Staging)
         run: |
-          curl --fail --retry 5 --retry-delay 10 ${{ secrets.STAGING_FRONTEND_URL }}
-          curl --fail --retry 5 --retry-delay 10 ${{ secrets.STAGING_SUBMISSION_URL }}/health
-          curl --fail --retry 5 --retry-delay 10 ${{ secrets.STAGING_ANALYSIS_URL }}/actuator/health
+          if [ -n "${{ secrets.STAGING_FRONTEND_URL }}" ]; then curl --fail --retry 5 --retry-delay 10 ${{ secrets.STAGING_FRONTEND_URL }}; else echo "Frontend URL not set"; fi
+          if [ -n "${{ secrets.STAGING_SUBMISSION_URL }}" ]; then curl --fail --retry 5 --retry-delay 10 ${{ secrets.STAGING_SUBMISSION_URL }}/health; else echo "Submission URL not set"; fi
+          if [ -n "${{ secrets.STAGING_ANALYSIS_URL }}" ]; then curl --fail --retry 5 --retry-delay 10 ${{ secrets.STAGING_ANALYSIS_URL }}/actuator/health; else echo "Analysis URL not set"; fi
           
       - name: Notify on failure
         if: failure()
@@ -217,18 +217,18 @@ jobs:
     steps:
       - name: Trigger Render Deploy Hooks for Production
         run: |
-          curl -X POST ${{ secrets.RENDER_PROD_FRONTEND_HOOK }}
-          curl -X POST ${{ secrets.RENDER_PROD_SUBMISSION_HOOK }}
-          curl -X POST ${{ secrets.RENDER_PROD_ANALYSIS_HOOK }}
+          if [ -n "${{ secrets.RENDER_PROD_FRONTEND_HOOK }}" ]; then curl -X POST ${{ secrets.RENDER_PROD_FRONTEND_HOOK }}; else echo "Prod Frontend hook not set"; fi
+          if [ -n "${{ secrets.RENDER_PROD_SUBMISSION_HOOK }}" ]; then curl -X POST ${{ secrets.RENDER_PROD_SUBMISSION_HOOK }}; else echo "Prod Submission hook not set"; fi
+          if [ -n "${{ secrets.RENDER_PROD_ANALYSIS_HOOK }}" ]; then curl -X POST ${{ secrets.RENDER_PROD_ANALYSIS_HOOK }}; else echo "Prod Analysis hook not set"; fi
           
       - name: Wait for services to spin up
         run: sleep 60
         
       - name: Smoke Tests (Production)
         run: |
-          curl --fail --retry 5 --retry-delay 10 ${{ secrets.STAGING_FRONTEND_URL }}
-          curl --fail --retry 5 --retry-delay 10 ${{ secrets.STAGING_SUBMISSION_URL }}/health
-          curl --fail --retry 5 --retry-delay 10 ${{ secrets.STAGING_ANALYSIS_URL }}/actuator/health
+          if [ -n "${{ secrets.PROD_FRONTEND_URL }}" ]; then curl --fail --retry 5 --retry-delay 10 ${{ secrets.PROD_FRONTEND_URL }}; else echo "Prod Frontend URL not set"; fi
+          if [ -n "${{ secrets.PROD_SUBMISSION_URL }}" ]; then curl --fail --retry 5 --retry-delay 10 ${{ secrets.PROD_SUBMISSION_URL }}/health; else echo "Prod Submission URL not set"; fi
+          if [ -n "${{ secrets.PROD_ANALYSIS_URL }}" ]; then curl --fail --retry 5 --retry-delay 10 ${{ secrets.PROD_ANALYSIS_URL }}/actuator/health; else echo "Prod Analysis URL not set"; fi
           
       - name: Notify on failure
         if: failure()
